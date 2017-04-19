@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Calc {
   public static void main(String args[]) {
-    print(legandre(42, 61, true));
+    print(findSqRoot(81,97));
   }
 
   public static void print(Object text) {
@@ -81,8 +81,10 @@ public class Calc {
       if (logging) print("current factor: " + factor);
       if (factor == 2) {
         reminder = (int)mod(p, 8);
-        if (logging) print(p + " mod 8 = " + reminder);
-        System.out.print("(2/" + p + ") = ");
+        if (logging){
+          print(p + " mod 8 = " + reminder);
+          System.out.print("(2/" + p + ") = ");
+        }
         if (reminder == 1 || reminder == 7) {
           result *= 1;
           if (logging) print(1);
@@ -113,10 +115,9 @@ public class Calc {
     return result;
   }
 
-  public static void findSqRoot(long a, long p) {
-    long x;
-
-    byte pMod4 = (byte)mod(p, 4);
+  public static long findSqRoot(long a, long p) {
+    long x = 0;
+    int pMod4 = (int)mod(p, 4);
 
     if (pMod4 == 3) {
       print(p + " = 3 mod 4");
@@ -134,20 +135,73 @@ public class Calc {
       print(p + " = 1 mod 4");
 
       long  h,
-            k = 1,
+            k,
             _k = 1;
 
-      while (((p - 1) % Math.pow(2, _k)) > 0) {
-        k = _k++;
+      while (p - 1 > Math.pow(2, _k)) {
+        _k++;
       }
-      h = (p - 1) / k;
+
+      k = --_k;
+
+      while (((p - 1) % Math.pow(2, _k)) > 0) {
+        k = --_k;
+      }
+      h = (p - 1) / (long)Math.pow(2, _k);
       print(p + " - 1 = 2^" + k + " * " + h);
       print("k = " + k + "; h = " + h);
-      //Legandre
 
+      // don't sure that it's secure
+      long a1 = mod((long)Math.pow(a, ((h + 1) / 2)), p);
+      if (h % 2 == 0) {
+        throw new RuntimeException("h is even. FIXME");
+      }
+      print("a1 = " + a1);
+
+      long a2 = 1;
+
+      while (mod(a * a2, p) != 1) {
+        a2++;
+      }
+      print("a2 = " + a2);
+
+      long n = 0;
+      int lg;
+      for (int i = 2; i < p; i++) {
+        lg = legandre(i, (int)p, false);
+        if ( lg == -1) {
+          n = i;
+          break;
+        }
+      }
+      print("n = " + n);
+
+      if (n == 0) {
+        throw new RuntimeException("Something bad happened. Can't find (n/p) = -1");
+      }
+
+      long n1 = mod((long)Math.pow(n, h), p);
+      long n2 = 1;
+      print("n1 = " + n1 + "\nn2 = 1");
+      long b, c, d;
+      for (int i = 0; i < k - 2; i++) {
+        b = mod((a1 * n2), p);
+        c = mod((a2 * mod((long)Math.pow(b, 2), p)), p);
+        d = mod((long)Math.pow(c, (long)Math.pow(2, k - i - 2)), p);
+        print("i = " + i + "\n\tb = " + b + "\n\tc = " + c + "\n\td = " + d);
+        if (d == p - 1) {
+          n2 = n2 * mod((long)Math.pow(n1, Math.pow(2, i)), p);
+          print("n2 = " + n2);
+        } else if (d != 1) {
+          throw new RuntimeException("Something bad happened. d = " + d);
+        }
+      }
+
+      x = mod((a1 * n2), p);
+      print("x = +- " + x);
     } else {
       throw new Error("Unknown error. Check the arguments.");
     }
-
+    return x;
   }
 }
